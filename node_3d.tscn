@@ -5,14 +5,19 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mwhae"]
 shader = ExtResource("1_ytxxp")
-shader_parameter/light01 = Vector3(2.29, 4.35, -4.275)
-shader_parameter/cameraPosition = Vector3(0, 0, -5)
+shader_parameter/antiAliasingLevel = 0
+shader_parameter/cameraPosition = Vector3(0, 1, -5)
+shader_parameter/cameraRotationAxis = Vector3(0, 1, 0)
+shader_parameter/cameraAngle = 0.075
 shader_parameter/cameraOffset = Vector2(0, 0)
 shader_parameter/fieldOfView = 0.0
-shader_parameter/plane2 = Vector4(0, 1, -1, -1)
-shader_parameter/bgGradient = 1.0
-shader_parameter/bg1 = Vector3(0.1, 0.1, 0.2)
-shader_parameter/bg2 = Vector3(0.455, 0.52, 0.835)
+shader_parameter/plane2 = Vector4(0, 1, 0, 0.5)
+shader_parameter/bgGradient = 0.705
+shader_parameter/bg1 = Vector3(0.535, 0.155, 0.505)
+shader_parameter/bg2 = Vector3(1.385, 1, 0.465)
+shader_parameter/skyboxAxis = Vector3(0.7, 0, 0)
+shader_parameter/skyboxAngle = 4.695
+shader_parameter/voidColor = Vector3(0.59, 0.505, 0.77)
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_w306i")
