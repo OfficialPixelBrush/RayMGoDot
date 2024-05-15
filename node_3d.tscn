@@ -1,12 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://ra0ggtrspexb"]
+[gd_scene load_steps=4 format=3 uid="uid://ra0ggtrspexb"]
 
+[ext_resource type="Script" path="res://game.gd" id="1_w306i"]
 [ext_resource type="Shader" path="res://raymarch.gdshader" id="1_ytxxp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mwhae"]
 shader = ExtResource("1_ytxxp")
-shader_parameter/light01 = Vector3(9.12, 17.315, -10.94)
+shader_parameter/light01 = Vector3(-2, 3, -3)
 
 [node name="Node2D" type="Node2D"]
+script = ExtResource("1_w306i")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
