@@ -20,7 +20,6 @@ shader_parameter/skyboxAngle = 4.695
 shader_parameter/voidColor = Vector3(0.59, 0.505, 0.77)
 
 [node name="Node2D" type="Node2D"]
-script = ExtResource("1_w306i")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
@@ -31,3 +30,4 @@ material = SubResource("ShaderMaterial_mwhae")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource("1_w306i")
