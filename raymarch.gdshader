@@ -178,7 +178,11 @@ float mapTheWorld(vec3 p)
 	float torus_9 = sdTorus(p, vec3(0.0), vec2(1.0,0.5));
 	float plane_7 = sdfWavePlane(p, vec4(0.0,1.0,0.0, 0.0), 10.0, 0.3, vec2(0.0,0.0));
 	float pyramid_8 = sdPyramid(p, 1.0, 5.0, vec3(10.0), vec3(0.0,1.0,0.0), -TIME/5.0);
-	float pyramid_10 = sdPyramid(p, 1.0, -50.0, vec3(0.0, 20.0, 0.0), vec3(0.0,1.0,0.0), -TIME/5.0);
+	float pryamidFrequency = 1.0;
+	float pyramidAmplitude = 1.0;
+	float waveOffset = sin(pryamidFrequency * (p.x + TIME)) * pyramidAmplitude;
+	waveOffset *= cos(pryamidFrequency * (p.z + TIME)) * pyramidAmplitude;
+	float pyramid_10 = sdPyramid(p, 1.0, -50.0, vec3(0.0, 20.0, 0.0), vec3(0.0,1.0,0.0), -TIME/5.0)+waveOffset;
 	float pyramid_9 = sdPyramid(p, 1.0, 3.0+sin(TIME), vec3(-10.0, 4.0, 5.0), vec3(1.0,1.0,1.0), -TIME/3.0);
 	
     // max for itersection
