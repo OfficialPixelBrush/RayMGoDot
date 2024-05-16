@@ -3,16 +3,15 @@ render_mode unshaded;
 
 uniform int antiAliasingLevel = 0;
 uniform vec3 cameraPosition = vec3(0.0f,1.0f,-5.0f);
-uniform vec3 cameraRotationAxis = vec3(0.0f,1.0f,0.0f);
-uniform float cameraAngle = 0.0;
+uniform vec3 cameraRotation = vec3(0.0f,0.0f,0.0f);
 uniform vec2 cameraOffset = vec2(0.0f,0.0f);
 uniform float fieldOfView = 0.0f;
 uniform vec4 plane2 = vec4(0.0, 1.0, 0.0,0.5);
 uniform float bgGradient = 4.93;
 uniform vec3 bg1 = vec3(0.275,0.145,0.415);
-uniform vec3 bg2 = vec3(0.98,0.405,0.44);
-uniform vec3 skyboxAxis = vec3(0.4,0.2,0.1);
-uniform float skyboxAngle = 0.5;
+uniform vec3 bg2 = vec3(1.425,0.995,0.5);
+uniform vec3 skyboxAxis = vec3(0.7,0.0,0.0);
+uniform float skyboxAngle = -1.570796;
 uniform vec3 voidColor = vec3(0.59,0.505,0.77);
 
 void vertex() {
@@ -24,6 +23,18 @@ vec3 rot3D(vec3 p, vec3 axis, float angle) {
 	return mix(dot(axis,p) * axis, p, cos(angle)) + cross(axis,p) * sin(angle);
 }
 
+vec3 rotFromEuler(vec3 p, vec3 eulerAngles) {
+  // Extract pitch, yaw, and roll from eulerAngles
+  float pitch = eulerAngles.x;
+  float yaw = eulerAngles.y;
+  float roll = eulerAngles.z;
+
+  // Calculate rotation axis based on pitch, yaw, and roll
+  vec3 axis = normalize(vec3(sin(yaw) * cos(pitch), cos(yaw) * cos(pitch), sin(pitch)));
+
+  // Use rot3D with the calculated axis and angle for each rotation
+  return rot3D(rot3D(rot3D(p, axis, roll), vec3(1.0, 0.0, 0.0), yaw), vec3(0.0, 1.0, 0.0), pitch);
+}
 
 float sdfSphere(vec3 position, vec3 sphereOrigin, float radius) {
     return distance(position, sphereOrigin) - radius;
@@ -53,11 +64,41 @@ float sdfGyroid(vec3 p, float k) {
 	return sin(p.x) * cos(p.y) + sin(p.y) * cos(p.z) + sin(p.z) * cos(p.x);
 }
 
-float sdBox( vec3 p, vec3 b, vec3 t, vec3 rotationAxis, float angle) {
-	p -= t;
+float sdBox( vec3 p, vec3 b, vec3 position, vec3 rotationAxis, float angle) {
+	p -= position;
 	p = rot3D(p,rotationAxis,angle);
 	vec3 q = abs(p) - b;
 	return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+float sdPyramid( vec3 p, float h, float scale, vec3 position, vec3 rotationAxis, float angle) {
+	p -= position;
+	p = rot3D(p,rotationAxis,angle);
+	p /= scale;
+	float m2 = h*h + 0.25;
+
+	p.xz = abs(p.xz);
+	p.xz = (p.z>p.x) ? p.zx : p.xz;
+	p.xz -= 0.5;
+
+	vec3 q = vec3( p.z, h*p.y - 0.5*p.x, h*p.x + 0.5*p.y);
+
+	float s = max(-q.x,0.0);
+	float t = clamp( (q.y-0.5*p.z)/(m2+0.25), 0.0, 1.0 );
+
+	float a = m2*(q.x+s)*(q.x+s) + q.y*q.y;
+	float b = m2*(q.x+0.5*t)*(q.x+0.5*t) + (q.y-m2*t)*(q.y-m2*t);
+
+	float d2 = min(q.y,-q.x*m2-q.y*0.5) > 0.0 ? 0.0 : min(a,b);
+
+	return (sqrt( (d2+q.z*q.z)/m2 ) * sign(max(q.z,-p.y)))*scale;
+}
+
+float sdTorus( vec3 p, vec3 position, vec2 t )
+{
+	p -= position;
+	vec2 q = vec2(length(p.xz)-t.x,p.y);
+	return length(q)-t.y;
 }
 
 float opUnion( float d1, float d2 )
@@ -109,29 +150,26 @@ float mapTheWorld(vec3 p)
     float sphere_3 = sdfSphere(p, circle3, 1.5);
     float plane_5 = sdfWavePlane(p, plane2, 1.0, 0.5*sin(TIME), vec2(1.0,1.0));
     float plane_6 = sdfWavePlane(p, plane2, 1.211, 0.25*cos(TIME), vec2(1.0,1.0));
-    float gyroid_6 = sdfGyroid(p, 4.0f);
 	vec3 boxSize = vec3(4.0,1.0,2.0);
 	vec3 boxPos = vec3(-10.0,3.0,5);
 	float box_7 = sdBox(p, boxSize, boxPos, vec3(0.0,1.0,0.0), TIME/3.0);
-    /*
-    vec3 box = { 1.0, 1.0, 1.0};
-    vec3 box2 = { 0.0, 0.0, 0.0};
-    vec3 boxSize = { 0.5, 0.5, 0.5};
-    float box_7 = getSignedDistanceFromCube(box, box2, boxSize);
-    */
-    
-    // Later we might have sphere_1, sphere_2, cube_3, etc...
-    // fmax for itersection
-    // fmin for both
-    // fmax for itersection
-    // fmin for both
+	float torus_8 = sdTorus(p, vec3(0.0), vec2(1.0,0.4));
+	float torus_9 = sdTorus(p, vec3(0.0), vec2(1.0,0.5));
+	float plane_7 = sdfWavePlane(p, vec4(0.0,1.0,0.0, 0.0), 10.0, 0.3, vec2(0.0,0.0));
+	float pyramid_8 = sdPyramid(p, 1.0, 5.0, vec3(10.0), vec3(0.0,1.0,0.0), -TIME/5.0);
+	float pyramid_10 = sdPyramid(p, 1.0, -50.0, vec3(0.0, 20.0, 0.0), vec3(0.0,1.0,0.0), -TIME/5.0);
+	float pyramid_9 = sdPyramid(p, 1.0, 3.0+sin(TIME), vec3(-10.0, 4.0, 5.0), vec3(1.0,1.0,1.0), -TIME/3.0);
+	
+    // max for itersection
+    // min for both
     float finalDistance = opIntersection(sphere_1,sphere_2);
-	finalDistance = min(opSmoothSubtraction(sphere_3,opSmoothIntersection(plane_6,plane_5, 0.1),0.1), finalDistance);
-	finalDistance = min(box_7, finalDistance);
-	//finalDistance = min(pryamid_8, finalDistance);
-	//finalDistance = opSmoothUnion(tri_4, finalDistance,1.0);
-    //finalDistance = max(gyroid_6,finalDistance); //fmin(fmax(gyroid_6,plane_5),finalDistance);
-    //finalDistance = fmin(box_7,finalDistance);
+	finalDistance = min(opSmoothSubtraction(pyramid_10, opSmoothSubtraction(sphere_3,opSmoothIntersection(plane_6,plane_5, 0.1),0.1), 1.0), finalDistance);
+	finalDistance = min(opSmoothUnion(box_7,pyramid_9, 0.5), finalDistance);
+	finalDistance = min(torus_8, finalDistance);
+	finalDistance = min(opSmoothSubtraction(plane_7, torus_9, 0.1), finalDistance);
+	finalDistance = min(pyramid_8, finalDistance);
+	//finalDistance = opSmoothSubtraction(pyramid_9, finalDistance, 0.1);
+	
     return finalDistance;
 }
 
@@ -181,15 +219,8 @@ vec3 rayMarch(vec3 rayOrigin, vec3 rayDirection) {
 		vec3 empty = vec3(float(i))/float(numberOfSteps); 
 		color *= (1.0 - empty)*voidColor;
 		color += empty * getSkybox(rayDirection);
-		if (distanceToClosest < minDistance) {
-			//vec3 normal = calculateNormal(currentPosition);
-			//color *= normal;
-			//return getSkybox(rayDirection*normal);
-			break;
-		}
-		if (progress > maxDistance) {
-			return getSkybox(rayDirection);
-		}
+		if (distanceToClosest < minDistance) { break; }
+		if (progress >= maxDistance) { return getSkybox(rayDirection); }
 	}
 	color *= 1.0 - vec3(progress / maxDistance);
 	return color;
@@ -202,7 +233,7 @@ void fragment() {
 	uv.y *= -1.0;
 	uv.x = uv.x/aspectRatio;
     vec3 rayDirection = normalize(vec3(uv,1.0f) + vec3(cameraOffset,fieldOfView));
-	rayDirection = rot3D(rayDirection, cameraRotationAxis, cameraAngle);
+	rayDirection = rotFromEuler(rayDirection, cameraRotation);
 	vec3 c;
 	
 	/*
