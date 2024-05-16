@@ -10,21 +10,24 @@ shader_parameter/cameraPosition = Vector3(0, 1, -5)
 shader_parameter/cameraRotation = Vector3(0, 0, 0)
 shader_parameter/cameraOffset = Vector2(0, 0)
 shader_parameter/fieldOfView = 0.0
-shader_parameter/plane2 = Vector4(0, 1, 0, 0.5)
 shader_parameter/bgGradient = 0.705
 shader_parameter/bg1 = Vector3(0.275, 0.145, 0.415)
 shader_parameter/bg2 = Vector3(1.425, 0.995, 0.5)
 shader_parameter/skyboxAxis = Vector3(0.7, 0, 0)
 shader_parameter/skyboxAngle = -1.5708
 shader_parameter/voidColor = Vector3(0.59, 0.505, 0.77)
+shader_parameter/sizeOfData = 0
+shader_parameter/maxObjects = 100
+shader_parameter/objects = PackedVector3Array()
 
 [sub_resource type="TorusMesh" id="TorusMesh_dgm0u"]
 inner_radius = 0.4
 
 [node name="Node3D" type="Node3D"]
+script = ExtResource("1_w306i")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 3.77887)
 v_offset = -0.25
 fov = 70.0
 size = 0.07
@@ -36,8 +39,13 @@ material = SubResource("ShaderMaterial_mwhae")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource("1_w306i")
 metadata/_edit_use_anchors_ = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.936499, 4.76837e-07, -0.385721)
 mesh = SubResource("TorusMesh_dgm0u")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.869998, 0.649652, -3.21306)
+mesh = SubResource("TorusMesh_dgm0u")
+skeleton = NodePath("../MeshInstance3D")

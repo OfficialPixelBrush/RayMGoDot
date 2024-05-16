@@ -1,6 +1,6 @@
-extends ColorRect
+extends Node3D
 
-@onready var rayMarchScreen = $"."
+@onready var rayMarchScreen = $Camera3D/CanvasLayer/ColorRect
 @onready var mat = rayMarchScreen.material as ShaderMaterial
 
 var cameraPosition = Vector3(0.0,1.0,-5.0);
@@ -19,12 +19,62 @@ var runSpeed = 2.0;
 
 var RAD = deg_to_rad(90.0);
 
+var nodes : Array = []
+
+func get_all_children(node) -> Array:
+	var nodes : Array = []
+	for N in node.get_children():
+		#if N.get_child_count() > 0:
+		#	nodes.append(N)
+		#	nodes.append_array(get_all_children(N))
+		#else:
+		nodes.append(N)
+	return nodes
+
+func packObject(object):
+	var data = [];
+	var type;
+	var id = object.get_instance_id();
+	var pos = object.get_position();
+	var rot = object.get_rotation();
+	var scl = object.get_scale();
+	var param;
+	var objectType = object.get_mesh();
+	if (objectType is SphereMesh):
+		type = 1;
+		param = objectType.get_radius();
+	if (objectType is BoxMesh):
+		type = 2;
+	if (objectType is TorusMesh):
+		type = 3;
+		param = Vector2(objectType.get_inner_radius(), objectType.get_outer_radius());
+	data.append(type)
+	data.append(id)
+	data.append(pos)
+	data.append(rot)
+	data.append(scl)
+	data.append(param)
+	return data;
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	# TODO: Data transfer via 1D Texture to shader??
+	# Send current level data
+	# TODO: Make it so this only runs if level was changed
+	# TODO: Also make it so this only runs on the objects that changed
+	nodes = get_all_children($".")
+	var vec3OfNodes = [];
+	for i in nodes:
+		vec3OfNodes.append(Vector3(i.get_position()));
+		if i is MeshInstance3D:
+			print(packObject(i))
+	mat.set("shader_parameter/maxObjects", nodes.size());
+	mat.set("shader_parameter/objects", vec3OfNodes)
 	pass # Replace with function body.
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _process(delta):	
+	# Camera Movement
 	var movementSpeed;
 	if Input.is_action_pressed("Run"):
 		movementSpeed = runSpeed;

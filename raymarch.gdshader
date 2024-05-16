@@ -6,13 +6,24 @@ uniform vec3 cameraPosition = vec3(0.0f,1.0f,-5.0f);
 uniform vec3 cameraRotation = vec3(0.0f,0.0f,0.0f);
 uniform vec2 cameraOffset = vec2(0.0f,0.0f);
 uniform float fieldOfView = 0.0f;
-uniform vec4 plane2 = vec4(0.0, 1.0, 0.0,0.5);
 uniform float bgGradient = 4.93;
 uniform vec3 bg1 = vec3(0.275,0.145,0.415);
 uniform vec3 bg2 = vec3(1.425,0.995,0.5);
 uniform vec3 skyboxAxis = vec3(0.7,0.0,0.0);
 uniform float skyboxAngle = -1.570796;
 uniform vec3 voidColor = vec3(0.59,0.505,0.77);
+
+struct Object {
+  vec3 position;
+  vec3 rotation;
+  float scale;
+};
+
+uniform int sizeOfData = 0;
+
+
+uniform int maxObjects = 100;
+uniform vec3[100] objects;
 
 void vertex() {
 	// Called for every vertex the material is visible on.
@@ -136,6 +147,15 @@ float opSmoothIntersection( float d1, float d2, float k )
     return mix( d2, d1, h ) + k*h*(1.0-h);
 }
 
+/*
+float mapTheWorld(vec3 p) {
+	float finalDistance = 1000000000000.0;
+	for (int i = 0; i < maxObjects; i++) {
+		finalDistance = min(sdTorus(p, objects[i], vec2(1.0,0.4)), finalDistance);
+	}
+	return finalDistance;
+}*/
+
 float mapTheWorld(vec3 p)
 {
     float value = sin(TIME/5.0f);
@@ -148,6 +168,7 @@ float mapTheWorld(vec3 p)
     float sphere_2 = sdfSphere(p, circle2, 1.0);
     vec3 circle3 = vec3(-2.5f, -0.5f+value4, -1.0f);
     float sphere_3 = sdfSphere(p, circle3, 1.5);
+	vec4 plane2 = vec4(0.0, 1.0, 0.0,0.5);
     float plane_5 = sdfWavePlane(p, plane2, 1.0, 0.5*sin(TIME), vec2(1.0,1.0));
     float plane_6 = sdfWavePlane(p, plane2, 1.211, 0.25*cos(TIME), vec2(1.0,1.0));
 	vec3 boxSize = vec3(4.0,1.0,2.0);
@@ -168,7 +189,6 @@ float mapTheWorld(vec3 p)
 	finalDistance = min(torus_8, finalDistance);
 	finalDistance = min(opSmoothSubtraction(plane_7, torus_9, 0.1), finalDistance);
 	finalDistance = min(pyramid_8, finalDistance);
-	//finalDistance = opSmoothSubtraction(pyramid_9, finalDistance, 0.1);
 	
     return finalDistance;
 }
@@ -205,6 +225,10 @@ vec3 getSkybox(vec3 rayDirection) {
 	return interpolateColor(bg1,bg2,rayDirection.y,bgGradient);
 }
 
+vec3 getGlow(vec3 rayDirection) {
+	return getSkybox(rayDirection);
+}
+
 vec3 rayMarch(vec3 rayOrigin, vec3 rayDirection) {
 	int numberOfSteps = 80;
 	float minDistance = 0.001;
@@ -218,7 +242,7 @@ vec3 rayMarch(vec3 rayOrigin, vec3 rayDirection) {
 		progress += distanceToClosest;
 		vec3 empty = vec3(float(i))/float(numberOfSteps); 
 		color *= (1.0 - empty)*voidColor;
-		color += empty * getSkybox(rayDirection);
+		color += empty * getGlow(rayDirection);
 		if (distanceToClosest < minDistance) { break; }
 		if (progress >= maxDistance) { return getSkybox(rayDirection); }
 	}
