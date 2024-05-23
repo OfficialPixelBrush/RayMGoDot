@@ -12,6 +12,8 @@ uniform vec3 bg2 = vec3(1.425,0.995,0.5);
 uniform vec3 skyboxAxis = vec3(0.7,0.0,0.0);
 uniform float skyboxAngle = -1.570796;
 uniform vec3 voidColor = vec3(0.59,0.505,0.77);
+uniform bool shells = false;
+uniform float shellThickness = -0.1;
 
 struct Object {
   vec3 position;
@@ -194,6 +196,10 @@ float mapTheWorld(vec3 p)
 	finalDistance = min(opSmoothSubtraction(plane_7, torus_9, 0.1), finalDistance);
 	finalDistance = min(pyramid_8, finalDistance);
 	
+	if ((finalDistance < shellThickness) && (shells)) {
+		finalDistance *= -1.0;
+	}
+	
     return finalDistance;
 }
 
@@ -280,7 +286,9 @@ void fragment() {
 		}
 	    c = c/float(numberOfPoints);
 	} else {*/
-		c = rayMarch(cameraPosition, rayDirection);
+		vec3 cP = cameraPosition + rotFromEuler(vec3(uv,0.0),cameraRotation);
+		
+		c = rayMarch(cP, rayDirection);
 	//}
 	// Called for every pixel the material is visible on.
 	COLOR = vec4(c, 1.0);
