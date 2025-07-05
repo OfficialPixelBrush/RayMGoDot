@@ -19,6 +19,9 @@ var runSpeed = 2.0;
 
 var RAD = deg_to_rad(90.0);
 
+var maxBounces = 0;
+var numberOfSamples = 1;
+
 var nodes : Array = []
 
 func get_all_children(node) -> Array:
@@ -107,6 +110,21 @@ func _process(delta):
 		cameraRotationVelocity.x -= turnSpeed*delta;
 	if Input.is_action_pressed("LookRight"):
 		cameraRotationVelocity.x += turnSpeed*delta;
+		
+	if Input.is_action_just_pressed("increaseBounces"):
+		maxBounces += 1;
+	if Input.is_action_just_pressed("decreaseBounces"):
+		maxBounces -= 1;
+		
+	if (maxBounces < 0):
+		maxBounces = 0;
+		
+	if Input.is_action_just_pressed("increaseSamples"):
+		numberOfSamples += 1;
+	if Input.is_action_just_pressed("decreaseSamples"):
+		numberOfSamples -= 1;
+	if (numberOfSamples < 1):
+		numberOfSamples = 1;
 	
 	# Camera Zoom
 	if Input.is_action_just_released("ZoomIn"):
@@ -137,3 +155,5 @@ func _process(delta):
 	mat.set("shader_parameter/cameraPosition", cameraPosition);
 	mat.set("shader_parameter/cameraRotation", cameraRotation);
 	mat.set("shader_parameter/fieldOfView", fieldOfView);
+	mat.set("shader_parameter/maxBounces", maxBounces);
+	mat.set("shader_parameter/numberOfSamples", numberOfSamples);

@@ -14,6 +14,8 @@ uniform float skyboxAngle = -1.570796;
 uniform vec3 voidColor = vec3(0.59,0.505,0.77);
 uniform bool shells = false;
 uniform float shellThickness = -0.1;
+uniform int maxBounces = 1;
+uniform int numberOfSamples = 1;
 
 struct Object {
   vec3 position;
@@ -238,13 +240,27 @@ vec3 getSkybox(vec3 rayDirection) {
 vec3 getGlow(vec3 rayDirection) {
 	return getSkybox(rayDirection);
 }
+vec3 estimateNormal(vec3 p) {
+	const float eps = 0.001;
+	return normalize(vec3(
+		mapTheWorld(p + vec3(eps, 0.0, 0.0)) - mapTheWorld(p - vec3(eps, 0.0, 0.0)),
+		mapTheWorld(p + vec3(0.0, eps, 0.0)) - mapTheWorld(p - vec3(0.0, eps, 0.0)),
+		mapTheWorld(p + vec3(0.0, 0.0, eps)) - mapTheWorld(p - vec3(0.0, 0.0, eps))
+	));
+}
+float rand(vec2 co, float time, int sampleID) {
+    float seed = float(sampleID) * 17.0;
+    return fract(sin(dot(co.xy + seed, vec2(12.9898,78.233))) * 43758.5453);
+}
 
-vec3 rayMarch(vec3 rayOrigin, vec3 rayDirection) {
+
+vec3 rayMarch(vec3 rayOrigin, vec3 rayDirection, int sample) {
 	int numberOfSteps = 80;
 	float minDistance = 0.001;
 	float maxDistance = 100.0;
 	float progress = 0.0;
 	vec3 color = getSkybox(rayDirection); //vec3(1.0);
+	int bounces = 0;
 	
 	for (int i = 0; i < numberOfSteps; ++i) {
 		vec3 currentPosition = rayOrigin + rayDirection * progress;
@@ -253,7 +269,16 @@ vec3 rayMarch(vec3 rayOrigin, vec3 rayDirection) {
 		vec3 empty = vec3(float(i))/float(numberOfSteps); 
 		color *= (1.0 - empty)*voidColor;
 		color += empty * getGlow(rayDirection);
-		if (distanceToClosest < minDistance) { break; }
+		if (distanceToClosest < minDistance && bounces >= maxBounces) {
+			break;
+		}
+		if (distanceToClosest < minDistance) {
+			vec3 normal = estimateNormal(currentPosition);
+			
+			// Optional: use the normal for shading, reflection, etc.
+			rayDirection = reflect(rayDirection, normal*rand(rayOrigin.xy+rayDirection.xy,TIME,sample));
+			bounces += 1;
+		}
 		if (progress >= maxDistance) { return getSkybox(rayDirection); }
 	}
 	color *= 1.0 - vec3(progress / maxDistance);
@@ -288,7 +313,10 @@ void fragment() {
 	} else {*/
 		vec3 cP = cameraPosition + rotFromEuler(vec3(uv,0.0),cameraRotation);
 		
-		c = rayMarch(cP, rayDirection);
+		for (int i = 0; i < numberOfSamples; i++) {
+			c += rayMarch(cP, rayDirection, i);
+		}
+		c /= float(numberOfSamples);
 	//}
 	// Called for every pixel the material is visible on.
 	COLOR = vec4(c, 1.0);

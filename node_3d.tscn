@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://ra0ggtrspexb"]
 
-[ext_resource type="Script" path="res://game.gd" id="1_w306i"]
-[ext_resource type="Shader" path="res://raymarch.gdshader" id="1_ytxxp"]
+[ext_resource type="Script" uid="uid://d3jxcjkqaqkag" path="res://game.gd" id="1_w306i"]
+[ext_resource type="Shader" uid="uid://c532y0bpohydh" path="res://raymarch.gdshader" id="1_ytxxp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mwhae"]
 shader = ExtResource("1_ytxxp")
@@ -18,6 +18,8 @@ shader_parameter/skyboxAngle = -1.5708
 shader_parameter/voidColor = Vector3(0.59, 0.505, 0.77)
 shader_parameter/shells = false
 shader_parameter/shellThickness = -0.1
+shader_parameter/maxBounces = 0
+shader_parameter/numberOfSamples = 1
 shader_parameter/sizeOfData = 0
 shader_parameter/maxObjects = 100
 shader_parameter/objects = PackedVector3Array()
